@@ -129,7 +129,7 @@ You can get more specific also, like:
  tracked:review=all tracked:deferred=new ignored=none other=new
 ")
 
-(defun magit-review/parse-filter-string (filter-string)
+(defun magit-review/parse-filter-string (&optional filter-string)
   "Take a filter string and break it into filter coponents.
 
 So:
@@ -138,7 +138,12 @@ So:
 will become:
   ((\"tracked\" . 'all)
    (\"ignored\" . 'none)
-   (\"other\" . 'new))"
-  (mapcar
-   (lambda (item) (split-string item "="))
-   (split-string "tracked=all ignored=none other=new")))
+   (\"other\" . 'new))
+
+You can pass this FILTER-STRING; otherwise it will process
+magit-review/filter-rule"
+  (let ((filter-string (or filter-string magit-review/filter-rule)))
+    (mapcar
+     (lambda (item) (split-string item "="))
+     (split-string "tracked=all ignored=none other=new"))))
+
