@@ -1,8 +1,8 @@
 ;; Magit-reviewer
 ;; --------------
-
+;;
 ;; Copyright (C) 2012, Christopher Allan Webber
-
+;;
 ;; magit-reviewer is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 3, or (at
@@ -15,6 +15,7 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 
 ;; This is a BUFFER LOCAL VARIABLE, do not set.
@@ -108,6 +109,25 @@ Buffer-local; do not set manually!")
 
 ;; Branch filtering
 ;; ----------------
+
+(defvar magit-review/filter-rule
+  "tracked=all ignored=none other=new"
+  "String to state how things are being filtered.
+
+Basically, with a string like:
+
+  tracked=all ignored=none other=new
+
+this will mean:
+ - All tracked branches (eg, tracked:review or tracked:deferred,
+   whatever) will be shown, regardless of whether there's new commits or not.
+ - All ignored branches (eg, ignored:ignored and
+   ignored:nothingnew) will be ignored, regardless of whatever
+ - Anything else will be displayed, but *only* if there are new commits.
+
+You can get more specific also, like:
+ tracked:review=all tracked:deferred=new ignored=none other=new
+")
 
 (defun magit-review/parse-filter-string (filter-string)
   "Take a filter string and break it into filter coponents.
