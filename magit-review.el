@@ -1,5 +1,23 @@
+;; Magit-reviewer
+;; --------------
 
-; This is a BUFFER LOCAL VARIABLE, do not set.
+;; Copyright (C) 2012, Christopher Allan Webber
+
+;; magit-reviewer is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or (at
+;; your option) any later version.
+;;
+;; Magit is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+;; License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+;; This is a BUFFER LOCAL VARIABLE, do not set.
 (defvar magit-review/review-state
   nil
   "State of reviews in this magit-review buffer.
@@ -10,8 +28,16 @@ Doesn't contain info on whether or not there's anything new to be
 seen in the branch.
 
 Buffer-local; do not set manually!")
+(make-variable-buffer-local 'magit-review/review-state)
+
+(defvar magit-review/review-state-changed
+  nil
+  "Whether or not the review state has changed since last being serialized")
+(make-variable-buffer-local 'magit-review/review-state-changed)
+
 
 ;;; Format of review metadata
+;;; -------------------------
 ;; 
 ;; Here's a mini json representation:
 ;; 
@@ -42,7 +68,19 @@ Buffer-local; do not set manually!")
 (defun magit-review/get-review-file ()
   (concat (magit-git-dir) "info/magit-review"))
 
+
 ; Load review file
+(defun magit-review/read-review-file ()
+  "Read the review file and get back an alist"
+  (let ((magit-review-file magit-review/get-review-file)
+        (json-key-type 'string)
+        (json-object-type 'alist))
+    (if (file-exists-p magit-review-file)
+        (json-read-file magit-review-file))))
+
+(defun magit-review/load-review-file ()
+  "Read the review file into the buffer-local state of reviewing"
+  (setq magit-review/review-state (magit-review/read-review-file)))
 
 
 ; Serialize current state
