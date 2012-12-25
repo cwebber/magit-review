@@ -104,3 +104,21 @@ Buffer-local; do not set manually!")
         (rename-file magit-review-file
                      (concat (magit-git-dir) "info/magit-review.old")
                      t))))
+
+
+;; Branch filtering
+;; ----------------
+
+(defun magit-review/parse-filter-string (filter-string)
+  "Take a filter string and break it into filter coponents.
+
+So:
+  tracked=all ignored=none other=new
+
+will become:
+  ((\"tracked\" . 'all)
+   (\"ignored\" . 'none)
+   (\"other\" . 'new))"
+  (mapcar
+   (lambda (item) (split-string item "="))
+   (split-string "tracked=all ignored=none other=new")))
