@@ -127,6 +127,20 @@ this will mean:
 
 You can get more specific also, like:
  tracked:review=all tracked:deferred=new ignored=none other=new
+
+Valid states are... well anything, though convention is to use
+\"tracked\" and \"ignored\" for keeping note of what to track or
+ignore... but you could use anything.  There are some special
+cases though... \"unknown\" means it does not have any state
+assigned to it, and \"other\" is used to say \"anything that has
+not matched yet will match this\", and you should always set it
+last in your filter rule if using.
+
+Valid directives are:
+ - all (show everything)
+ - none (show nothing)
+ - new (show only things with new commits)
+ - nothing-new (show only things that have no new commits)
 ")
 
 (defun magit-review/parse-filter-string (&optional filter-string)
