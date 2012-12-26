@@ -150,9 +150,9 @@ So:
   tracked=all ignored=none other=new
 
 will become:
-  ((\"tracked\" . 'all)
-   (\"ignored\" . 'none)
-   (\"other\" . 'new))
+  ((\"tracked\" \"all\")
+   (\"ignored\" \"none\")
+   (\"other\" \"new\"))
 
 You can pass this FILTER-STRING; otherwise it will process
 magit-review/filter-rule"
@@ -201,13 +201,18 @@ it as \"untracked\" before passing it in here.
   "Should we include anything new in this branch? Check!"
   (cond
    ; always include branches under an "all" directive
-   ((eq rule-directive 'all) t)
+   ((equal rule-directive "all") t)
    ; never include any branches marked none
-   ((eq rule-directive 'none) nil)
-   ((and (eq rule-diurective 'new)
+   ((equal rule-directive "none") nil)
+   ((and (equal rule-directive "new")
          (magit-review/has-new-commits branch-name)) t)
-   ((and (eq rule-diurective 'nothing-new)
+   ((and (equal rule-directive "nothing-new")
          (not (magit-review/has-new-commits branch-name))) t)))
+
+
+(defvar magit-review/default-directive
+  "new"
+  "Default directive if we don't find a matching rule.")
 
 
 (defun magit-review/filter-branches (&optional refs-to-check filter-rules)
@@ -215,40 +220,48 @@ it as \"untracked\" before passing it in here.
 
 This function weeds out the ones that shouldn't be shown.
 
-The returned an alist which will look something like:
+The returned a plist which will look something like:
   ((\"untracked\" . (\"refs/remotes/bretts/keyboard_nav\"
                      \"refs/remotes/bretts/master\")
    (\"tracked:review\" . (\"refs/remotes/bretts/newlayout\"
                           \"refs/remotes/bretts/newlayout-stage\"))))
 "
-  (let ((refs-to-check (or refs-to-check (magit-list-interesting-refs)))
+  (let ((refs-to-check
+         (or refs-to-check
+             (mapcar (lambda (x) (cdr x)) (magit-list-interesting-refs))))
         (filter-rules (or filter-rules (magit-review/parse-filter-string)))
         (filtered-branches nil))
     (mapc
      (lambda (branch-name)
        (let* ((branch-state
-               (assoc "state"
-                      (assoc branch-name
-                             magit-review/review-state)))
-              (branch-rule
-               (magit-review/determine-matching-rule
-                (branch-name branch-state filter-rules)))
+               (or (assoc "state"
+                          (assoc branch-name
+                                 magit-review/review-state))
+                   "unknown"))
+              ;; (branch-rule
+              ;;  (magit-review/determine-matching-rule
+              ;;   branch-name branch-state filter-rules))
               (matching-rule
                (magit-review/determine-matching-rule
-                branch-state filter-rules)))
-              (matching-rule-state (car matching-rule))
-              (matching-rule-directive (cdr matching-rule)))
-         (if (or
-              ; if the directive is all, it always gets included
-              (eq directive 'all)
-              ; if the directive 
-              (and (eq directive
-         ;(not (magit-git-string "merge-base" head ref))
-         
+                branch-state filter-rules))
+              (matching-rule-state
+               (if matching-rule
+                   (car matching-rule)
+                 "unknown"))
+              (matching-rule-directive
+               (if matching-rule
+                   (nth 1 matching-rule)
+                 magit-review/default-directive)))
+         ; If we should include the branch, let's include it!
+         (if (magit-review/should-include-branch
+              branch-name matching-rule-directive)
 
-
-              ;(setq test-plist
-              ;  (lax-plist-put test-plist "key" (cons "value" (lax-plist-get test-plist "key"))))
-
-
-    
+             ; File this branch with the other branches of its type
+             (setq filtered-branches
+                   (lax-plist-put
+                    filtered-branches branch-state
+                    (cons branch-name
+                          (lax-plist-get filtered-branches branch-state)))))))
+     refs-to-check)
+    filtered-branches))
+           
