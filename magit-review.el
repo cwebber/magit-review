@@ -147,3 +147,50 @@ magit-review/filter-rule"
      (lambda (item) (split-string item "="))
      (split-string "tracked=all ignored=none other=new"))))
 
+
+(defun magit-review/determine-matching-rule (branch-state rules)
+  "Return a matching rule... if we can find one.
+
+Note: if the branch doesn't have a state, it's convention to set
+it as \"untracked\" before passing it in here.
+"
+  (let ((branch-state-components (split-string branch-state ":")))
+    (block matching-rule-finder
+      (loop
+       for rule in rules do
+       (let* ((rule-state (car rule))
+              (rule-state-components (split-string rule-state ":")))
+         (if (or
+              ; it's other, which should always go last, so this is a catch-all
+              (equal rule-state "other")
+              ; they're the same thing; that's a match
+              (equal rule-state branch-state)
+              ; this is a "catch-many" rule, and it's multi-component
+              (and (= (length rule-state-components) 1)
+                   (> (length branch-state-components) 1)
+                   (equal (car branch-state-components) rule-state))
+              ; the branch state is none and this is an "untracked" rule
+              (and (equal branch-state nil)
+                   (equal rule-state "untracked")))
+             (return-from matching-rule-finder rule)))))))
+
+
+(defun magit-review/filter-branches ()
+  "Return a filtered set of branches"
+  (let ((refs-to-check (magit-list-interesting-refs))
+        (filter-rules (magit-review/parse-filter-string))
+        (filtered-branches nil))
+    (mapc
+     (lambda (branch-name)
+       (let* ((branch-state
+               (assoc "state"
+                      (assoc branch-name
+                             magit-review/review-state)))
+              (branch-rule
+               (magit-review/determine-matching-rule
+                (branch-name branch-state filter-rules)))
+              (show-branch nil))
+         ;(not (magit-git-string "merge-base" head ref))
+
+
+    
