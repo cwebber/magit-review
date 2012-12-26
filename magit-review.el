@@ -1,9 +1,9 @@
-;; Magit-reviewer
-;; --------------
+;; Magit-review
+;; ------------
 ;;
 ;; Copyright (C) 2012, Christopher Allan Webber
 ;;
-;; magit-reviewer is free software; you can redistribute it and/or
+;; magit-review is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 3, or (at
 ;; your option) any later version.
@@ -265,3 +265,20 @@ The returned a plist which will look something like:
      refs-to-check)
     filtered-branches))
            
+;; magit-review display
+
+(define-derived-mode magit-review-mode magit-mode "Magit Review"
+  "Mode for looking at commits that could be merged from other branches.
+
+\\{magit-review-mode-map}"
+  :group 'magit)
+
+(defun magit-review (&optional all)
+  (interactive "P")
+  (let ((topdir (magit-get-top-dir default-directory))
+        (current-branch (magit-get-current-branch)))
+    (magit-buffer-switch "*magit-review*")
+    (magit-mode-init topdir 'magit-review-mode
+                     #'magit-refresh-review-buffer
+                     current-branch all)))
+
