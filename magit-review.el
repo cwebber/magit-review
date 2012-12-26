@@ -145,7 +145,7 @@ magit-review/filter-rule"
   (let ((filter-string (or filter-string magit-review/filter-rule)))
     (mapcar
      (lambda (item) (split-string item "="))
-     (split-string "tracked=all ignored=none other=new"))))
+     (split-string filter-string))))
 
 
 (defun magit-review/determine-matching-rule (branch-state rules)
@@ -175,10 +175,40 @@ it as \"untracked\" before passing it in here.
              (return-from matching-rule-finder rule)))))))
 
 
-(defun magit-review/filter-branches ()
-  "Return a filtered set of branches"
-  (let ((refs-to-check (magit-list-interesting-refs))
-        (filter-rules (magit-review/parse-filter-string))
+(defun magit-review/has-new-commits (branch-name)
+  "See if this branch has any new commits in it."
+  (> (length (magit-git-lines
+              "log" "--pretty=oneline"
+              (concat "HEAD" ".." branch-name)))
+     0))
+
+
+(defun magit-review/should-include-branch (branch-name rule-directive)
+  "Should we include anything new in this branch? Check!"
+  (cond
+   ; always include branches under an "all" directive
+   ((eq rule-directive 'all) t)
+   ; never include any branches marked none
+   ((eq rule-directive 'none) nil)
+   ((and (eq rule-diurective 'new)
+         (magit-review/has-new-commits branch-name)) t)
+   ((and (eq rule-diurective 'nothing-new)
+         (not (magit-review/has-new-commits branch-name))) t)))
+
+
+(defun magit-review/filter-branches (&optional refs-to-check filter-rules)
+  "Return a filtered set of branches
+
+This function weeds out the ones that shouldn't be shown.
+
+The returned an alist which will look something like:
+  ((\"untracked\" . (\"refs/remotes/bretts/keyboard_nav\"
+                     \"refs/remotes/bretts/master\")
+   (\"tracked:review\" . (\"refs/remotes/bretts/newlayout\"
+                          \"refs/remotes/bretts/newlayout-stage\"))))
+"
+  (let ((refs-to-check (or refs-to-check (magit-list-interesting-refs)))
+        (filter-rules (or filter-rules (magit-review/parse-filter-string)))
         (filtered-branches nil))
     (mapc
      (lambda (branch-name)
@@ -189,8 +219,22 @@ it as \"untracked\" before passing it in here.
               (branch-rule
                (magit-review/determine-matching-rule
                 (branch-name branch-state filter-rules)))
-              (show-branch nil))
+              (matching-rule
+               (magit-review/determine-matching-rule
+                branch-state filter-rules)))
+              (matching-rule-state (car matching-rule))
+              (matching-rule-directive (cdr matching-rule)))
+         (if (or
+              ; if the directive is all, it always gets included
+              (eq directive 'all)
+              ; if the directive 
+              (and (eq directive
          ;(not (magit-git-string "merge-base" head ref))
+         
+
+
+              ;(setq test-plist
+              ;  (lax-plist-put test-plist "key" (cons "value" (lax-plist-get test-plist "key"))))
 
 
     
