@@ -189,15 +189,15 @@ it as \"untracked\" before passing it in here.
              (return-from matching-rule-finder rule)))))))
 
 
-(defun magit-review/has-new-commits (branch-name)
+(defun magit-review/has-new-commits (branch-name &optional head)
   "See if this branch has any new commits in it."
   (> (length (magit-git-lines
               "log" "--pretty=oneline"
-              (concat "HEAD" ".." branch-name)))
+              (concat (or head "HEAD") ".." branch-name)))
      0))
 
 
-(defun magit-review/should-include-branch (branch-name rule-directive)
+(defun magit-review/should-include-branch (branch-name rule-directive &optional head)
   "Should we include anything new in this branch? Check!"
   (cond
    ; always include branches under an "all" directive
@@ -205,9 +205,9 @@ it as \"untracked\" before passing it in here.
    ; never include any branches marked none
    ((equal rule-directive "none") nil)
    ((and (equal rule-directive "new")
-         (magit-review/has-new-commits branch-name)) t)
+         (magit-review/has-new-commits branch-name head)) t)
    ((and (equal rule-directive "nothing-new")
-         (not (magit-review/has-new-commits branch-name))) t)))
+         (not (magit-review/has-new-commits branch-name head))) t)))
 
 
 (defvar magit-review/default-directive
@@ -215,7 +215,7 @@ it as \"untracked\" before passing it in here.
   "Default directive if we don't find a matching rule.")
 
 
-(defun magit-review/filter-branches (&optional refs-to-check filter-rules)
+(defun magit-review/filter-branches (&optional refs-to-check filter-rules head)
   "Return a filtered set of branches
 
 This function weeds out the ones that shouldn't be shown.
@@ -254,7 +254,7 @@ The returned a plist which will look something like:
                  magit-review/default-directive)))
          ; If we should include the branch, let's include it!
          (if (magit-review/should-include-branch
-              branch-name matching-rule-directive)
+              branch-name matching-rule-directive head)
 
              ; File this branch with the other branches of its type
              (setq filtered-branches
@@ -266,6 +266,12 @@ The returned a plist which will look something like:
     filtered-branches))
            
 ;; magit-review display
+
+(defun magit-refresh-review-buffer (head all)
+  (magit-create-buffer-sections
+    (magit-with-section 'reviewbuf nil
+      (insert "lol world"))))
+
 
 (define-derived-mode magit-review-mode magit-mode "Magit Review"
   "Mode for looking at commits that could be merged from other branches.
@@ -281,4 +287,3 @@ The returned a plist which will look something like:
     (magit-mode-init topdir 'magit-review-mode
                      #'magit-refresh-review-buffer
                      current-branch all)))
-
