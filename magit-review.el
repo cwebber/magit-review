@@ -16,6 +16,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;; This borrows significant ideas (and a few small code snippets) from
+;; magit wazzup.
 
 
 ;; This is a BUFFER LOCAL VARIABLE, do not set.
@@ -35,6 +37,11 @@ Buffer-local; do not set manually!")
   nil
   "Whether or not the review state has changed since last being serialized")
 (make-variable-buffer-local 'magit-review/review-state-changed)
+
+(defvar magit-review-head nil
+  "The integration head for the current review buffer.
+This is only non-nil in review buffers.")
+(make-variable-buffer-local 'magit-review-head)
 
 
 ;;; Format of review metadata
@@ -196,7 +203,6 @@ it as \"untracked\" before passing it in here.
               (concat (or head "HEAD") ".." branch-name)))
      0))
 
-
 (defun magit-review/should-include-branch (branch-name rule-directive &optional head)
   "Should we include anything new in this branch? Check!"
   (cond
@@ -215,7 +221,7 @@ it as \"untracked\" before passing it in here.
   "Default directive if we don't find a matching rule.")
 
 
-(defun magit-review/filter-branches (&optional refs-to-check filter-rules head)
+(defun magit-review/filter-branches (&optional head refs-to-check filter-rules)
   "Return a filtered set of branches
 
 This function weeds out the ones that shouldn't be shown.
@@ -266,11 +272,34 @@ The returned a plist which will look something like:
     filtered-branches))
            
 ;; magit-review display
-
 (defun magit-refresh-review-buffer (head all)
+  (setq magit-review-head head)
   (magit-create-buffer-sections
-    (magit-with-section 'reviewbuf nil
-      (insert "lol world"))))
+    (let ((branches-to-show (magit-review/filter-branches head)))
+      (mapc
+       (lambda (branch-data)
+         (magit-with-section 'reviewbuf nil
+           (insert (format "Branches in %s:\n" state))
+           (dolist (branch branches)
+             (let* ((magit-section-hidden-default t)
+                    (n (length (magit-git-lines "log" "--pretty=oneline"
+                                                (concat head ".." branch))))
+                    (section
+                     (magit-git-section
+                      (cons branch 'review)
+                      (format "%s unmerged commits in %s"
+                              n branch)
+                      'magit-wash-log
+                      "log"
+                      (format "--max-count=%s" magit-log-cutoff-length)
+                      "--abbrev-commit"
+                      (format "--abbrev=%s" magit-sha1-abbrev-length)
+                      "--graph"
+                      "--pretty=oneline"
+                      (format "%s..%s" head branch)
+                      "--"))
+                    (magit-set-section-info ref section))))))
+       branches-to-show))))
 
 
 (define-derived-mode magit-review-mode magit-mode "Magit Review"
