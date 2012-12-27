@@ -236,7 +236,7 @@ The returned a plist which will look something like:
          (or refs-to-check
              (mapcar (lambda (x) (cdr x)) (magit-list-interesting-refs))))
         (filter-rules (or filter-rules (magit-review/parse-filter-string)))
-        (filtered-branches nil))
+        (filtered-branches (make-hash-table :test 'equal)))
     (mapc
      (lambda (branch-name)
        (let* ((branch-state
@@ -263,11 +263,10 @@ The returned a plist which will look something like:
               branch-name matching-rule-directive head)
 
              ; File this branch with the other branches of its type
-             (setq filtered-branches
-                   (lax-plist-put
-                    filtered-branches branch-state
-                    (cons branch-name
-                          (lax-plist-get filtered-branches branch-state)))))))
+             (puthash
+              branch-state
+              (cons branch-name (gethash branch-state filtered-branches))
+              filtered-branches))))
      refs-to-check)
     filtered-branches))
            
@@ -276,8 +275,8 @@ The returned a plist which will look something like:
   (setq magit-review-head head)
   (magit-create-buffer-sections
     (let ((branches-to-show (magit-review/filter-branches head)))
-      (mapc
-       (lambda (branch-data)
+      (maphash
+       (lambda (state branches)
          (magit-with-section 'reviewbuf nil
            (insert (format "Branches in %s:\n" state))
            (dolist (branch branches)
@@ -297,8 +296,8 @@ The returned a plist which will look something like:
                       "--graph"
                       "--pretty=oneline"
                       (format "%s..%s" head branch)
-                      "--"))
-                    (magit-set-section-info ref section))))))
+                      "--")))
+                    (magit-set-section-info branch section)))))
        branches-to-show))))
 
 
