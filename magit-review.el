@@ -234,19 +234,21 @@ The returned a plist which will look something like:
 "
   (let ((refs-to-check
          (or refs-to-check
-             (mapcar (lambda (x) (cdr x)) (magit-list-interesting-refs))))
+             (magit-list-interesting-refs)))
         (filter-rules (or filter-rules (magit-review/parse-filter-string)))
         (filtered-branches (make-hash-table :test 'equal)))
     (mapc
-     (lambda (branch-name)
-       (let* ((branch-state
+     (lambda (branch)
+       (let* ((branch-name (car branch))
+              (branch-ref (cdr branch))
+              (branch-state
                (or (assoc "state"
-                          (assoc branch-name
+                          (assoc branch-ref
                                  magit-review/review-state))
                    "unknown"))
               ;; (branch-rule
               ;;  (magit-review/determine-matching-rule
-              ;;   branch-name branch-state filter-rules))
+              ;;   branch-ref branch-state filter-rules))
               (matching-rule
                (magit-review/determine-matching-rule
                 branch-state filter-rules))
@@ -260,16 +262,16 @@ The returned a plist which will look something like:
                  magit-review/default-directive)))
          ; If we should include the branch, let's include it!
          (if (magit-review/should-include-branch
-              branch-name matching-rule-directive head)
+              branch-ref matching-rule-directive head)
 
              ; File this branch with the other branches of its type
              (puthash
               branch-state
-              (cons branch-name (gethash branch-state filtered-branches))
+              (cons branch (gethash branch-state filtered-branches))
               filtered-branches))))
      refs-to-check)
     filtered-branches))
-           
+
 ;; magit-review display
 (defun magit-refresh-review-buffer (head all)
   (setq magit-review-head head)
@@ -280,14 +282,16 @@ The returned a plist which will look something like:
          (magit-with-section 'reviewbuf nil
            (insert (format "Branches in %s:\n" state))
            (dolist (branch branches)
-             (let* ((magit-section-hidden-default t)
+             (let* ((branch-name (car branch))
+                    (branch-ref (cdr branch))
+                    (magit-section-hidden-default t)
                     (n (length (magit-git-lines "log" "--pretty=oneline"
-                                                (concat head ".." branch))))
+                                                (concat head ".." branch-ref))))
                     (section
                      (magit-git-section
-                      (cons branch 'review)
+                      (cons branch-ref 'review)
                       (format "%s unmerged commits in %s"
-                              n branch)
+                              n branch-name)
                       'magit-wash-log
                       "log"
                       (format "--max-count=%s" magit-log-cutoff-length)
@@ -295,9 +299,9 @@ The returned a plist which will look something like:
                       (format "--abbrev=%s" magit-sha1-abbrev-length)
                       "--graph"
                       "--pretty=oneline"
-                      (format "%s..%s" head branch)
+                      (format "%s..%s" head branch-ref)
                       "--")))
-                    (magit-set-section-info branch section)))))
+               (magit-set-section-info branch-ref section)))))
        branches-to-show))))
 
 
