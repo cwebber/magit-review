@@ -280,7 +280,7 @@ The returned a plist which will look something like:
       (maphash
        (lambda (state branches)
          (magit-with-section 'reviewbuf nil
-           (insert (format "Branches in %s:\n" state))
+           (insert (format "Branches in %s:\n\n" state))
            (dolist (branch branches)
              (let* ((branch-name (car branch))
                     (branch-ref (cdr branch))
@@ -304,13 +304,14 @@ The returned a plist which will look something like:
                      (format "%s..%s" head branch-ref)
                      "--"))
                  (progn
+                   ; I'm not sure whether or not this needs to be a section
                    (magit-with-section branch-ref 'review
                      (insert
                       (propertize
                        (format "(no commits) %s" branch-name)
                        'face 'magit-section-title)
-                      "\n")
-                     (insert "\n"))))))))
+                      "\n"))
+                   (insert "\n")))))))
        branches-to-show))))
 
 
