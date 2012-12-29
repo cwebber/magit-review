@@ -286,22 +286,31 @@ The returned a plist which will look something like:
                     (branch-ref (cdr branch))
                     (magit-section-hidden-default t)
                     (n (length (magit-git-lines "log" "--pretty=oneline"
-                                                (concat head ".." branch-ref))))
-                    (section
-                     (magit-git-section
-                      (cons branch-ref 'review)
-                      (format "%s unmerged commits in %s"
-                              n branch-name)
-                      'magit-wash-log
-                      "log"
-                      (format "--max-count=%s" magit-log-cutoff-length)
-                      "--abbrev-commit"
-                      (format "--abbrev=%s" magit-sha1-abbrev-length)
-                      "--graph"
-                      "--pretty=oneline"
-                      (format "%s..%s" head branch-ref)
-                      "--")))
-               (magit-set-section-info branch-ref section)))))
+                                                (concat head ".." branch-ref)))))
+               (if (> n 0)
+                   (magit-set-section-info
+                    branch-ref
+                    (magit-git-section
+                     (cons branch-ref 'review)
+                     (format "%s unmerged commits in %s"
+                             n branch-name)
+                     'magit-wash-log
+                     "log"
+                     (format "--max-count=%s" magit-log-cutoff-length)
+                     "--abbrev-commit"
+                     (format "--abbrev=%s" magit-sha1-abbrev-length)
+                     "--graph"
+                     "--pretty=oneline"
+                     (format "%s..%s" head branch-ref)
+                     "--"))
+                 (progn
+                   (magit-with-section branch-ref 'review
+                     (insert
+                      (propertize
+                       (format "(no commits) %s" branch-name)
+                       'face 'magit-section-title)
+                      "\n")
+                     (insert "\n"))))))))
        branches-to-show))))
 
 
