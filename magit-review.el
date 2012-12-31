@@ -1,3 +1,5 @@
+;; -*- mode: emacs-lisp; lexical-binding: t; -*-
+
 ;; Magit-review
 ;; ------------
 ;;
@@ -335,18 +337,12 @@ The returned a plist which will look something like:
   (make-local-variable 'magit-review/filter-rule)
   (setq magit-review/filter-rule filter))
 
-; RESUME HERE
 (defun magit-review/apply-filter-and-refresh (filter)
+  (interactive)
   (magit-review/apply-filter filter)
   (magit-review/add-filter-bookmark-keys)
   (magit-review/refresh-review-buffer
    (or magit-review-head "HEAD")))
-
-
-(defmacro magit-review/generate-apply-filter-func (filter)
-  `(lambda ()
-     (interactive)
-     (magit-review/apply-filter-and-refresh ,filter)))
 
 
 (defun magit-review/add-filter-bookmark-keys ()
@@ -355,10 +351,14 @@ The returned a plist which will look something like:
   (magit-key-mode-add-group 'review-bookmark)
   (loop
    for (key description filter) in magit-review/filter-bookmarks do
-   (magit-key-mode-insert-action
-    'review-bookmark key description
-    ; Generate a curried function that changes the filter
-    (magit-review/generate-apply-filter-func filter)))
+   (progn
+     (magit-key-mode-insert-action
+      'review-bookmark key description
+      ; Generate a curried function that changes the filter
+      (let ((this-filter filter))
+        (lambda ()
+          (interactive)
+          (magit-review/apply-filter-and-refresh this-filter))))))
   (magit-key-mode-generate 'review-bookmark))
 
 
