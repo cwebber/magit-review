@@ -325,12 +325,15 @@ The returned a plist which will look something like:
     ("tr" "Tracked review" "tracked:review=new other=none")
     ("ia" "Ignored all" "ignored=all other=none")
     ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
-    ("in" "ignored new" "ignored=new other=none")))
+    ("in" "ignored new" "ignored=new other=none")
+    ("a" "All" "other=all"))
+  "Note that after running this you probably want to eval
+  (magit-review/add-filter-bookmark-keys)")
 
 
 (defun magit-review/apply-filter (filter)
   (make-local-variable 'magit-review/filter-rule)
-  (setq 'magit-review/filter-rule filter))
+  (setq magit-review/filter-rule filter))
 
 ; RESUME HERE
 (defun magit-review/apply-filter-and-refresh (filter)
@@ -338,6 +341,13 @@ The returned a plist which will look something like:
   (magit-review/add-filter-bookmark-keys)
   (magit-review/refresh-review-buffer
    (or magit-review-head "HEAD")))
+
+
+(defmacro magit-review/generate-apply-filter-func (filter)
+  `(lambda ()
+     (interactive)
+     (magit-review/apply-filter-and-refresh ,filter)))
+
 
 (defun magit-review/add-filter-bookmark-keys ()
   "Add filter/bookmark keys"
@@ -348,10 +358,9 @@ The returned a plist which will look something like:
    (magit-key-mode-insert-action
     'review-bookmark key description
     ; Generate a curried function that changes the filter
-    (apply-partially
-     'magit-review/apply-filter-and-refresh
-     filter)))
+    (magit-review/generate-apply-filter-func filter)))
   (magit-key-mode-generate 'review-bookmark))
+
 
 (defvar magit-review-mode-map
   (let ((map (make-sparse-keymap)))
