@@ -273,7 +273,9 @@ The returned a plist which will look something like:
     filtered-branches))
 
 ;; magit-review display
-(defun magit-refresh-review-buffer (head all)
+(defun magit-review/refresh-review-buffer (head)
+  ; All doesn't make sense here.
+
   (setq magit-review-head head)
   (magit-create-buffer-sections
     (let ((branches-to-show (magit-review/filter-branches head)))
@@ -315,17 +317,65 @@ The returned a plist which will look something like:
        branches-to-show))))
 
 
+;; Keys stuff
+;; ----------
+
+(defvar magit-review/filter-bookmarks
+  '(("g" "General" "tracked=all ignored=none other=new")
+    ("tr" "Tracked review" "tracked:review=new other=none")
+    ("ia" "Ignored all" "ignored=all other=none")
+    ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
+    ("in" "ignored new" "ignored=new other=none")))
+
+
+(defun magit-review/apply-filter (filter)
+  (make-local-variable 'magit-review/filter-rule)
+  (setq 'magit-review/filter-rule filter))
+
+; RESUME HERE
+(defun magit-review/apply-filter-and-refresh (filter)
+  (magit-review/apply-filter filter)
+  (magit-review/add-filter-bookmark-keys)
+  (magit-review/refresh-review-buffer
+   (or magit-review-head "HEAD")))
+
+(defun magit-review/add-filter-bookmark-keys ()
+  "Add filter/bookmark keys"
+  ;; (re-)create the group
+  (magit-key-mode-add-group 'review-bookmark)
+  (loop
+   for (key description filter) in magit-review/filter-bookmarks do
+   (magit-key-mode-insert-action
+    'review-bookmark key description
+    ; Generate a curried function that changes the filter
+    (apply-partially
+     'magit-review/apply-filter-and-refresh
+     filter)))
+  (magit-key-mode-generate 'review-bookmark))
+
+(defvar magit-review-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "b") 'magit-key-mode-popup-review-bookmark)
+    map))
+
+(magit-review/add-filter-bookmark-keys)
+
+
+;; Mode stuff
+;; ----------
+
+
 (define-derived-mode magit-review-mode magit-mode "Magit Review"
   "Mode for looking at commits that could be merged from other branches.
 
 \\{magit-review-mode-map}"
   :group 'magit)
 
-(defun magit-review (&optional all)
-  (interactive "P")
+(defun magit-review ()
+  (interactive)
   (let ((topdir (magit-get-top-dir default-directory))
         (current-branch (magit-get-current-branch)))
     (magit-buffer-switch "*magit-review*")
     (magit-mode-init topdir 'magit-review-mode
-                     #'magit-refresh-review-buffer
-                     current-branch all)))
+                     #'magit-review/refresh-review-buffer
+                     current-branch)))
