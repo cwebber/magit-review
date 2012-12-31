@@ -276,8 +276,6 @@ The returned a plist which will look something like:
 
 ;; magit-review display
 (defun magit-review/refresh-review-buffer (head)
-  ; All doesn't make sense here.
-
   (setq magit-review-head head)
   (magit-create-buffer-sections
     (let ((branches-to-show (magit-review/filter-branches head)))
