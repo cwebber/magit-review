@@ -72,7 +72,7 @@ This is only non-nil in review buffers.")
 ;; ----------------------
 ;; 
 ;; Review file is jsonified versions of the local
-;; magit-review/review-state alist variable.
+;; magit-review/review-state hash-table variable.
 
 ; Get the review file
 (defun magit-review/get-review-file ()
@@ -81,12 +81,13 @@ This is only non-nil in review buffers.")
 
 ; Load review file
 (defun magit-review/read-review-file ()
-  "Read the review file and get back an alist"
-  (let ((magit-review-file magit-review/get-review-file)
+  "Read the review file and get back an hash-table"
+  (let ((magit-review-file (magit-review/get-review-file))
         (json-key-type 'string)
-        (json-object-type 'alist))
+        (json-object-type 'hash-table))
     (if (file-exists-p magit-review-file)
-        (json-read-file magit-review-file))))
+        (json-read-file magit-review-file)
+      (make-hash-table :test 'equal))))
 
 (defun magit-review/load-review-file ()
   "Read the review file into the buffer-local state of reviewing"
@@ -96,9 +97,9 @@ This is only non-nil in review buffers.")
 ; Serialize current state
 (defun magit-review/serialize-review-state ()
   "Serialize the current state of reviews to file."
-  (let ((magit-review-file magit-review/get-review-file)
+  (let ((magit-review-file (magit-review/get-review-file))
         (jsonified-review-state
-         (json-encode-alist magit-review/review-state)))
+         (json-encode-hash-table magit-review/review-state)))
     ; Move the old file aside
     (magit-review/move-old-review-file-if-exists)
     ; Write a new file
@@ -109,7 +110,7 @@ This is only non-nil in review buffers.")
 
 (defun magit-review/move-old-review-file-if-exists ()
   "If the old magit-review file exists, move it aside."
-  (let ((magit-review-file magit-review/get-review-file))
+  (let ((magit-review-file (magit-review/get-review-file)))
     (if (file-exists-p magit-review-file)
         (rename-file magit-review-file
                      (concat (magit-git-dir) "info/magit-review.old")
@@ -243,11 +244,12 @@ The returned a plist which will look something like:
      (lambda (branch)
        (let* ((branch-name (car branch))
               (branch-ref (cdr branch))
+              (branch-record (gethash branch-ref magit-review/review-state))
               (branch-state
-               (or (assoc "state"
-                          (assoc branch-ref
-                                 magit-review/review-state))
-                   "unknown"))
+               (if branch-record
+                   (or (gethash "state" branch-record)
+                       "unknown")
+                 "unknown"))
               ;; (branch-rule
               ;;  (magit-review/determine-matching-rule
               ;;   branch-ref branch-state filter-rules))
@@ -274,9 +276,15 @@ The returned a plist which will look something like:
      refs-to-check)
     filtered-branches))
 
+
 ;; magit-review display
 (defun magit-review/refresh-review-buffer (head)
+  ; load the review-state file if we haven't yet
+  (if (not magit-review/review-state)
+      (magit-review/load-review-file))
+
   (setq magit-review-head head)
+
   (magit-create-buffer-sections
     (let ((branches-to-show (magit-review/filter-branches head)))
       (maphash
@@ -316,6 +324,10 @@ The returned a plist which will look something like:
                    (insert "\n")))))))
        branches-to-show))))
 
+
+(defun magit-review/switch-state-manually ()
+  (interactive)
+  )
 
 ;; Keys stuff
 ;; ----------
