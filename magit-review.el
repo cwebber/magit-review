@@ -346,23 +346,26 @@ The returned a plist which will look something like:
 (defun magit-review/add-filter-bookmark-keys ()
   "Add filter/bookmark keys"
   ;; (re-)create the group
-  (magit-key-mode-add-group 'review-bookmark)
+  (magit-key-mode-add-group 'review-filter-bookmark)
   (loop
    for (key description filter) in magit-review/filter-bookmarks do
    (progn
      (magit-key-mode-insert-action
-      'review-bookmark key description
+      'review-filter-bookmark key description
       ; Generate a curried function that changes the filter
       (let ((this-filter filter))
         (lambda ()
           (interactive)
           (magit-review/apply-filter-and-refresh this-filter))))))
-  (magit-key-mode-generate 'review-bookmark))
+  (magit-key-mode-generate 'review-filter-bookmark))
 
 
 (defvar magit-review-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "b") 'magit-key-mode-popup-review-bookmark)
+    (define-key map (kbd "t") 'magit-key-mode-popup-review-filter-bookmark)
+    (define-key map (kbd "T") 'magit-review/switch-filter-manually)
+    (define-key map (kbd "s") 'magit-key-mode-popup-review-state-bookmark)
+    (define-key map (kbd "S") 'magit-review/switch-state-manually)
     map))
 
 (magit-review/add-filter-bookmark-keys)
