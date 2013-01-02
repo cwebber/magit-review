@@ -326,11 +326,14 @@ The returned a plist which will look something like:
 
 
 (defun magit-review/get-branch-ref-at-point ()
+  "Get the branch ref at point if we're hovering over a function"
   (save-excursion
     (beginning-of-line)
     (let ((section (plist-get (text-properties-at (point)) 'magit-section)))
-      (if (eq (magit-section-type section) 'review)
-          (magit-section-title section)))))
+      (cond ((eq (magit-section-type section) 'review)
+             (magit-section-title section))
+            ((eq (magit-section-type section) 'commit)
+             (magit-section-title (magit-section-parent section)))))))
 
 
 ;; Keys stuff
