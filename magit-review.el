@@ -325,9 +325,13 @@ The returned a plist which will look something like:
        branches-to-show))))
 
 
-(defun magit-review/switch-state-manually ()
-  (interactive)
-  )
+(defun magit-review/get-branch-ref-at-point ()
+  (save-excursion
+    (beginning-of-line)
+    (let ((section (plist-get (text-properties-at (point)) 'magit-section)))
+      (if (eq (magit-section-type section) 'review)
+          (magit-section-title section)))))
+
 
 ;; Keys stuff
 ;; ----------
