@@ -357,7 +357,7 @@ If branch has no state, returns nil."
          (branch-record
           (or (gethash branch-ref magit-review/review-state)
               (make-hash-table :test 'equal)))
-         (is-unknown (not (member input-state '(nil "unknown")))))
+         (is-unknown (member input-state '(nil "unknown"))))
     (cond
      ; if it's not unknown... set it
      ((not is-unknown)
@@ -370,7 +370,7 @@ If branch has no state, returns nil."
         (remhash "state" branch-record)
         (puthash branch-ref branch-record magit-review/review-state))))
     (magit-review/serialize-review-state)))
-      
+
     
 
 ;; Keys stuff
