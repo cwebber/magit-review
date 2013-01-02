@@ -35,10 +35,11 @@ seen in the branch.
 Buffer-local; do not set manually!")
 (make-variable-buffer-local 'magit-review/review-state)
 
-(defvar magit-review/review-state-changed
-  nil
-  "Whether or not the review state has changed since last being serialized")
-(make-variable-buffer-local 'magit-review/review-state-changed)
+;;; Maybe eventually we'll have a "save manually" feature
+;; (defvar magit-review/review-state-changed
+;;   nil
+;;   "Whether or not the review state has changed since last being serialized")
+;; (make-variable-buffer-local 'magit-review/review-state-changed)
 
 (defvar magit-review-head nil
   "The integration head for the current review buffer.
@@ -335,6 +336,42 @@ The returned a plist which will look something like:
             ((eq (magit-section-type section) 'commit)
              (magit-section-title (magit-section-parent section)))))))
 
+
+(defun magit-review/get-current-branch-state (branch-ref)
+  "Get the current state of this branch.
+
+If branch has no state, returns nil."
+  (let ((branch-record (gethash branch-ref magit-review/review-state)))
+    (if branch-record
+        (gethash "state" branch-record))))
+
+
+(defun magit-review/switch-state-manually ()
+  (interactive)
+  (let* ((branch-ref (magit-review/get-branch-ref-at-point))
+         (current-state (magit-review/get-current-branch-state branch-ref))
+         (input-state
+          (read-from-minibuffer
+           (format "Switch to what state? (currently %s): " (or current-state "unknown"))
+           current-state))
+         (branch-record
+          (or (gethash branch-ref magit-review/review-state)
+              (make-hash-table :test 'equal)))
+         (is-unknown (not (member input-state '(nil "unknown")))))
+    (cond
+     ; if it's not unknown... set it
+     ((not is-unknown)
+      (progn
+        (puthash "state" input-state branch-record)
+        (puthash branch-ref branch-record magit-review/review-state)))
+     ; is unknown, but previously had a value... unset it
+     ((and current-state is-unknown)
+      (progn
+        (remhash "state" branch-record)
+        (puthash branch-ref branch-record magit-review/review-state))))
+    (magit-review/serialize-review-state)))
+      
+    
 
 ;; Keys stuff
 ;; ----------
