@@ -392,12 +392,11 @@ Note that after running this you probably want to eval
   (magit-review/add-filter-bookmark-keys)")
 
 (defvar magit-review/state-bookmarks
-  '(("g" "General" "tracked=all ignored=none other=new")
-    ("tr" "Tracked review" "tracked:review=new other=none")
-    ("ia" "Ignored all" "ignored=all other=none")
-    ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
-    ("in" "ignored new" "ignored=new other=none")
-    ("a" "All" "other=all"))
+  '(("tr" "tracked:review" "tracked:review")
+    ("td" "tracked:deferred" "tracked:deferred")
+    ("ii" "ignored:ignored" "ignored:ignored")
+    ("in" "ignored:nothing-new" "ignored:nothing-new")
+    ("c" "clear state" nil))
   "Modify this to change the keyboard keys which set which state.
 
 Works like:
@@ -406,9 +405,11 @@ Works like:
 Note that after running this you probably want to eval
   (magit-review/add-state-bookmark-keys)")
 
-
 (defun magit-review/add-state-bookmark-keys ()
-  )
+  "Add state change bookmark keys"
+  (magit-review/add-filters-generic
+   'review-state-bookmark magit-review/state-bookmarks
+   'magit-review/apply-state-to-branch))
 
 
 (defun magit-review/apply-filter (filter)
