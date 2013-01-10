@@ -346,14 +346,16 @@ If branch has no state, returns nil."
         (gethash "state" branch-record))))
 
 
-(defun magit-review/switch-state-manually ()
+(defun magit-review/switch-state-manually (&optional state)
   (interactive)
   (let* ((branch-ref (magit-review/get-branch-ref-at-point))
          (current-state (magit-review/get-current-branch-state branch-ref))
          (input-state
-          (read-from-minibuffer
-           (format "Switch to what state? (currently %s): " (or current-state "unknown"))
-           current-state))
+          (or state
+              (read-from-minibuffer
+               (format "Switch to what state? (currently %s): "
+                       (or current-state "unknown"))
+               current-state)))
          (branch-record
           (or (gethash branch-ref magit-review/review-state)
               (make-hash-table :test 'equal)))
@@ -371,6 +373,9 @@ If branch has no state, returns nil."
         (puthash branch-ref branch-record magit-review/review-state))))
     (magit-review/serialize-review-state)))
 
+(defun magit-review/apply-state-to-branch (state)
+  (interactive)
+  (magit-review/switch-state-manually state))
     
 
 ;; Keys stuff
@@ -382,6 +387,7 @@ If branch has no state, returns nil."
     ("ia" "Ignored all" "ignored=all other=none")
     ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
     ("in" "ignored new" "ignored=new other=none")
+    ("nn" "nothing new" "other=nothing-new")
     ("a" "All" "other=all"))
   "Modify this to change the keyboard keys which set the current filter.
 
