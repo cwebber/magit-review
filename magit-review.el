@@ -407,6 +407,10 @@ Note that after running this you probably want to eval
   (magit-review/add-state-bookmark-keys)")
 
 
+(defun magit-review/add-state-bookmark-keys ()
+  )
+
+
 (defun magit-review/apply-filter (filter)
   (make-local-variable 'magit-review/filter-rule)
   (setq magit-review/filter-rule filter))
@@ -419,21 +423,27 @@ Note that after running this you probably want to eval
    (or magit-review-head "HEAD")))
 
 
-(defun magit-review/add-filter-bookmark-keys ()
-  "Add filter/bookmark keys"
+(defun magit-review/add-filters-generic (group bookmarks func)
   ;; (re-)create the group
-  (magit-key-mode-add-group 'review-filter-bookmark)
+  (magit-key-mode-add-group group)
   (loop
-   for (key description filter) in magit-review/filter-bookmarks do
+   for (key description args) in bookmarks do
    (progn
      (magit-key-mode-insert-action
-      'review-filter-bookmark key description
-      ; Generate a curried function that changes the filter
-      (let ((this-filter filter))
+      group key description
+      ; Generate a curried function that changes the args
+      (let ((this-arg args))
         (lambda ()
           (interactive)
-          (magit-review/apply-filter-and-refresh this-filter))))))
-  (magit-key-mode-generate 'review-filter-bookmark))
+          (funcall func this-arg))))))
+  (magit-key-mode-generate group))
+
+
+(defun magit-review/add-filter-bookmark-keys ()
+  "Add filter/bookmark keys"
+  (magit-review/add-filters-generic
+   'review-filter-bookmark magit-review/filter-bookmarks
+   'magit-review/apply-filter-and-refresh))
 
 
 (defvar magit-review-mode-map
