@@ -383,8 +383,28 @@ If branch has no state, returns nil."
     ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
     ("in" "ignored new" "ignored=new other=none")
     ("a" "All" "other=all"))
-  "Note that after running this you probably want to eval
+  "Modify this to change the keyboard keys which set the current filter.
+
+Works like:
+  ((\"shortcut\" \"Description\" \"state\"))
+
+Note that after running this you probably want to eval
   (magit-review/add-filter-bookmark-keys)")
+
+(defvar magit-review/state-bookmarks
+  '(("g" "General" "tracked=all ignored=none other=new")
+    ("tr" "Tracked review" "tracked:review=new other=none")
+    ("ia" "Ignored all" "ignored=all other=none")
+    ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
+    ("in" "ignored new" "ignored=new other=none")
+    ("a" "All" "other=all"))
+  "Modify this to change the keyboard keys which set which state.
+
+Works like:
+  ((\"shortcut\" \"Description\" \"state\"))
+
+Note that after running this you probably want to eval
+  (magit-review/add-state-bookmark-keys)")
 
 
 (defun magit-review/apply-filter (filter)
