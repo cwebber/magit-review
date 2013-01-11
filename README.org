@@ -221,10 +221,37 @@ Whew!  I'd better get to that one soon. ;)
 
 *** Builtin states and filters and their meanings
 
-Okay, 
+The default list of states is fairly short.  As said, states fall into
+two categories: things to review and things to ignore (you
+don't /have/ to use these paradigms, these are just the default ones).
+
+ - *tracked:review* -- This is something that needs to be reviewed and
+   merged.  It's on a "shortlist" of things you need to look at.
+   You'll get to it... you promise!
+ - *tracked:deferred* -- This is something you're keeping an eye on
+   but which isn't on your immediate review queue.  Very likely,
+   you're waiting on something.  For example, you may have reviewed it
+   and passed it back to the original author and are asking them to
+   make some changes before you are ready to merge it.
+ - *ignored:nothing-new* -- The last time you looked at this there
+   weren't any new commits in it.  That doesn't mean there aren't
+   now... somehow that might change (you may want to use a filter so
+   you can check on this from time to time and pull things out of this
+   state) but at the very least don't slow down our general view by
+   scanning them for new commits.
+ - *ignored:ignored* -- There may be new commits in here or there may
+   not... you really don't care, you just don't want to see these
+   branches anymore.
+
+There's also a "special state" which is "unknown"... which means there
+is no branch state set at all.  (You can filter on this special state,
+and switching the branch to unknown will actually clear the state
+altogether.)
 
 *** Switching states and filters manually
 
+
+** Understanding the filter syntax
 
 ** Making your own states and filters
 
