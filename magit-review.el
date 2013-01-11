@@ -227,7 +227,7 @@ it as \"untracked\" before passing it in here.
 
 
 (defvar magit-review/default-directive
-  "new"
+  "none"
   "Default directive if we don't find a matching rule.")
 
 
@@ -408,7 +408,7 @@ If branch has no state, returns nil."
     ("ia" "Ignored all" "ignored=all other=none")
     ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
     ("in" "ignored new" "ignored=new other=none")
-    ("nn" "nothing new" "other=nothing-new")
+    ("nn" "nothing new" "ignored:nothing-new=none other=nothing-new")
     ("a" "All" "other=all"))
   "Modify this to change the keyboard keys which set the current filter.
 
