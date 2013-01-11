@@ -250,21 +250,101 @@ altogether.)
 
 *** Switching states and filters manually
 
+If you want to set a state manually, that's really easy.  Instead of
+hitting "s" to use the state shortcuts, use "S" instead to change it
+manually.
+
+Similarly, instead of using "t" to change the filter via a bookmark,
+you can hit "T" to change it manually.  However, before you do that,
+you should probably understand how filters work!
 
 ** Understanding the filter syntax
 
-** Making your own states and filters
+The filter syntax is very minimal.  It basically works like:
+
+: "state=directive another:state=directive"
+
+In other words, you set multiple filter components separated by
+spaces.  Each filter component has a state (yes, you know what states
+are by now) and a directive that says what should be done with
+whatever branch matches that state.  Each filter is looked at in
+order; the first rule that matches is accepted.
+
+So let's look at a real-world example.
+
+: "tracked:review=all ignored=none unknown=new other=none"
+
+Okay, this is simple!  (It could be written more concisely, but I
+wanted a comprehensive example.)  Let's look at each piece in turn.
+
+ - *tracked:review=all* -- If something is marked as tracked:review,
+   this matches.  The directive is "all" so it will be shown
+   regardless of whether it has new commits (useful... you can move
+   anything that no longer has new commits because it was merged into
+   ignored:nothing-new if you forgot about it)
+ - *ignored=none* -- /Any/ branch that is in the ignored general state
+   will be ignored.  It doesn't matter if it's in ignored:ignored or
+   ignored:nothing-new, it will be ignored.  Notice how this is
+   different from the above rule, which is much more specific about
+   state, while this is more general.
+ - *unknown=new* -- As said above, unknown is a special state meaning
+   that it has no state.  According to this rule, only branches with
+   new commits will be shown if they have no assigned state.
+
+There's also one rule that doesn't need to be in this filter, but it's
+here for demonstration purposes:
+
+ - *other=none* -- This rule is somewhat superfluous here because
+   "none" is the default directive for anything that doesn't have a
+   matching rule (you can change this by changing the variable
+   'magit-review/default-directive if you like).  "other" is the other
+   special state, and it's a catch-all (so it should always go
+   last... magit-review isn't smart enough to reorder things so
+   anything after this rule is effectivel ignored).  So as you can
+   probably guess, in this case, something in say tracked:deferred
+   would be caught by this rule and be told not to be displayed (even
+   though that's the default anyway...)
+
+Valid directives are:
+ - all (show everything)
+ - none (show nothing)
+ - new (show only things with new commits)
+ - nothing-new (show only things that have no new commits)
+
+Knowing this, we can create some fancy filters.  For example, to skip
+over everything ignored but otherwise show anything that has new
+commits:
+
+: "ignored=none other=new"
+
+Or, to double check that our pile of branches in
+ignored:nothing-new *really* doesn't have anything new in it (who
+knows, that could have changed when we weren't looking!):
+
+: "ignored:nothing-new:new"
+
+Likewise, to clean out stuff you tracked but that actually doesn't
+have anything new anymore (so you should move it to
+ignored:nothing-new):
+
+: "tracked=nothing-new"
+
+Note the tricky distinction between ignored:nothing-new the state and
+nothing-new the directive. ;)
+
+** Making your own state and filter bookmarks
 
 
 
 ** Where things get stored
 
-magit-review stores things in 
+Easy!  magit-review stores things in a big ol json dump in
+.git/info/magit-review.
 
 
 * Things to do
 ** TODO Sorting the state categories in the display
 ** TODO Changing filters manually
 ** TODO Make sure all our docstrings are still accurate
+** TODO Forbid users from setting the state "other"; that's a special case
 ** TODO Notes
-** TODO Make 
