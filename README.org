@@ -1,0 +1,243 @@
+# Written in 2013 by Christopher Allan Webber
+#
+# To the extent possible under law, the author(s) have dedicated all
+# copyright and related and neighboring rights to this
+# documentation/README file to the public domain worldwide. This
+# software is distributed without any warranty.
+# 
+# You should have received a copy of the CC0 Public Domain
+# Dedication along with this software. If not, see
+# <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+* About magit-review
+** Motivation
+
+For a long time I used magit-wazzap to handle all my code reviews.
+magit-wazzup is awesome... who doesn't want a buffer where they can
+see all branches with new commits for them to check out at once?
+
+But I found that as my project grew, magit-wazzup failed to scale for
+me:
+ - It was too slow.  My project had about 500 or so branches and
+   magit-wazzup would check *all* of them if they had new commits and
+   format them all for display.  magit-wazzup had an interface to mark
+   something as "ignored" but it didn't really work for me because the
+   branches that should have been ignored didn't show up for me to
+   ignore them anyway!
+ - I also found magit-wazzup's ignore tool annoying because I didn't
+   have a nice way to double check later that I really wanted things
+   that were ignored to stay ignored.
+ - Sometimes I wanted to mark a few branches as "I need to review
+   these" and jump to a limited view of wazzup so I could just focus
+   on the branches I knew needed attention.
+
+If these irritations sound familiar to you, you might like
+magit-review (if not, you might want to just stick with magit-wazzup;
+it's admittedly slightly simpler).  And if you already like
+magit-wazzup, you'll be happy to see that magit-review basically works
+the same way, with just a few small enhancements.
+
+** magit-review's strategy
+
+magit-review works pretty much the same as magit-wazzup except that it
+adds two features: states and filters.  You can mark a branch with
+some sort of state (magit-review will serialize this so that it's
+remembered) and apply a filter so that only branches that match that
+state actually show up.  For more information on how to actually make
+use of that strategy, read on.
+
+** License
+
+magit-review is licensed under the GNU GPL v3 or later, just like
+GNU Emacs.
+
+This document is waived into the public domain under the CC0 tool.
+
+* Using magit-review
+** Installing
+
+Put magit-review.el on your elisp path or something. ;)
+
+Honestly, I just do:
+
+#+begin_src emacs-lisp
+(load-file "~/devel/magit-review/magit-review.el")
+#+end_src
+
+** Invoking magit-review
+
+First, open magit:
+
+: M-x magit-status
+
+Next, open magit-review:
+
+: M-x magit-review
+
+At this point you should have an interface that looks exactly like
+magit-wazzup, except you'll notice there's a header above all the
+commits that says "Branches in unknown:"
+
+This is because you haven't filed any branches into any states yet.
+Let's figure out how to switch filters and states so you can make the
+most of magit-review.
+
+** States and filters
+
+*** Switching filters via bookmarks
+
+Filters, as said, switch our branches based on their state.  There's a
+small rule syntax for switching the active filters, but we'll avoid
+going into how that works for now.  For the moment, let's try
+switching filters the easy way.
+
+The default filter is "general" mode.  We'll explain the details of
+how filter rules work later, but the rule for this is:
+: "tracked=all ignored=none other=new"
+
+This means that:
+ - Every branch that is marked to be "tracked" is shown, whether it
+   has new commits or not.  (If you haven't changed any states,
+   nothing should be tracked yet because you haven't marked anything
+   as such.)
+ - Anything marked as "ignored" will be ignored whether it has new
+   commits or not.
+ - Anything else will be checked first wither it has new commits.  If
+   it has new commits, it'll be shown; otherwise it won't show up at
+   all.
+
+Let's try switching to another filter.  Press the "t" key.  This
+brings up the fil"t"er bookmarks menu.  Try pressing "a" for "all".
+If you have branches that have no new commits in them, these will also
+now show up.  You can switch things back by pressing "t" and then "g"
+to switch back to the "general" filter again.
+
+*** Changing a branch's state
+
+But maybe that general view takes too long to load.  Augh!  There's
+plenty of branches that just don't /have/ anything anymore.  Why
+should you wait for them to show up when you /know/ they don't have
+any commits?
+
+So, let's switch to the "nothing new" filter.  This will help you hunt
+for branches that don't have anything new in them anymore so just
+shouldn't be displayed.  Press "t" then "nn" to switch to the nothing
+new filter now.
+
+Are there a bunch of branches here that say there are no commits?  On
+mine there are, and they look like this:
+
+: (no commits) master (willkg)
+: 
+: (no commits) keyboard_nav (willkg)
+: 
+: (no commits) 401-plugins (willkg)
+: 
+: (no commits) sqltests (tryggvib)
+
+Okay.  So we don't need these to show up any more, so let's tell
+magit-review not to look for them anymore.  We want to switch them to
+the ignored:nothing-new state.  That way they won't take up any more
+time when we're in the general filter.
+
+Move your cursor over one of these branches and press "s" to bring up
+the states bookmark menu.  Press "in"... this should set the state to
+"ignored:nothing-new" which means "we're ignoring this because we
+don't think this has any new commits in it any more."  (You could set
+up a filter to double check that you're right and that these branches
+haven't somehow gotten new commits later... magit-review makes that
+easy.)  The color of this branch should change indicating its state
+has changed.
+
+We can verify that this branch is moved over to the
+"ignored:nothing-new" state by switching our filter.  Press "t" then
+"ia" to switch to the filter that shows all branches currently marked
+as ignored.  You should see the branch you just marked show up.
+
+Okay, awesome.  Maybe you've changed a bunch of branches now.  Switch
+back to the general view ("t" then "g")... if your situation is like
+mine was, it should load a lot faster now!
+
+But wait... augh!  There's still some branches here that we just don't
+care about any more.  On my general view I currently see this branch:
+
+: 4 unmerged commits in flatpages (willkg)
+
+Ugh!  We merged that branch!  The problem is that we rebased it
+locally before merging, so it *looks* like it has new commits.  But it
+doesn't really!  We don't want it to bother us anymore when we're
+looking at our general review overview... let's get it out of here!
+
+Type "s" then "ii"... this switches the state to "ignored:ignored",
+which means that it doesn't *matter* to us that this has new commits,
+we just don't ever want to see it ever again because it's irrelevant
+now.
+
+Awesome!  If you hit "g" to refresh the buffer, it shouldn't show up
+any more.
+
+Okay... wait a second, did you notice that the two states that we set
+both started with "ignored:"?  That's because states generally come in
+two pieces: "general:specific".  For example, the general workflow of
+magit-review is that we either want to track things or we want to
+ignore them.  But we might want to do so for different reasons.  For
+example, we wanted to ignore some branches because they didn't have
+any new commits, and we wanted to ignore some other branches because
+they do have some new commits but they're just not relevant anymore.
+It's important to have those distinctions (okay, it's important to
+me): if new commits appear in the ignored:nothing-new section we'll
+want to find them and move them out of there.  That's not true of
+ignored:ignored because we want to ignore them forever.
+
+We'll explain the meaning of the builtin states and filters in the
+next section, but for now let's try doing one more state thing:
+sometimes you want to mark something as being tracked so you can focus
+on a shorter list of things to review.  Let's try that: select a
+branch you need to review.  For example, in my case I have a branch
+that my friend spaetz has been requesting I look at, and I'm like,
+yeah yeah, it's on my radar!  I've hit <Tab> on this one to look at
+the list of branches, so it's expanded.  Locally, it looks like this
+to me:
+
+: 3 unmerged commits in WIP/large_uploads (spaetz)
+: aab5af4 * Don't read full image media into RAM on copying (#419)
+: f2abb7b * Make Cloudfiles copy memory efficient too (#419)
+: f9b5d9c * Make copying to/from storage systems memory efficient (#419)
+
+But let's /really/ move it onto my radar by marking it as tracked.
+Hit "s" then "tr" which moves it to "tracked:review".  Now I can
+filter to seeing just tracked:review things... or even in the general
+section, this branch shows up in a completely different section than
+the ones that aren't marked:
+
+: Branches in tracked:review:
+: 
+: 3 unmerged commits in WIP/large_uploads (spaetz)
+: aab5af4 * Don't read full image media into RAM on copying (#419)
+: f2abb7b * Make Cloudfiles copy memory efficient too (#419)
+: f9b5d9c * Make copying to/from storage systems memory efficient (#419)
+
+Whew!  I'd better get to that one soon. ;)
+
+*** Builtin states and filters and their meanings
+
+Okay, 
+
+*** Switching states and filters manually
+
+
+** Making your own states and filters
+
+
+
+** Where things get stored
+
+magit-review stores things in 
+
+
+* Things to do
+** TODO Sorting the state categories in the display
+** TODO Changing filters manually
+** TODO Make sure all our docstrings are still accurate
+** TODO Notes
+** TODO Make 
