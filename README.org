@@ -334,13 +334,93 @@ nothing-new the directive. ;)
 
 ** Making your own state and filter bookmarks
 
+As said, you're not restricted to the states and filters that come
+packaged with magit-review... they're just the states and filters that
+make sense to the author.  But say you want to use the following
+states:
 
+ - *workified:do-it-now* -- This is when your boss is yelling at you
+   because you needed to get this done /yesterday/!
+ - *workified:review-it* -- This is something at your work that you
+   need to code review.  You should probably look at it, you promised
+   Sal that you'd check over her code soon!
+ - *workified:waiting-review* -- This is something that you passed off
+   for someone else to review, or something.  I don't know, you come
+   up with the rules. ;)
+
+That's fine!  Go for it.  Go ahead and do it!  You can just set these
+states manually by using "T" and everything will be fine and great! ;)
+
+However... you might want to not do this manually.  That's fairly
+tedious!  So we have an easy solution: use bookmarks!
+
+Bookmarks have a fairly simple syntax.  Here they are as defined in
+the magit-review source code:
+
+#+begin_src emacs-lisp
+(defvar magit-review/filter-bookmarks
+  '(("g" "General" "tracked=all ignored=none other=new")
+    ("tr" "Tracked review" "tracked:review=new other=none")
+    ("ia" "Ignored all" "ignored=all other=none")
+    ("ii" "ignored:ignored all" "ignored:ignored=all other=none")
+    ("in" "ignored new" "ignored=new other=none")
+    ("nn" "nothing new" "ignored:nothing-new=none other=nothing-new")
+    ("a" "All" "other=all"))
+  "Modify this to change the keyboard keys which set the current filter.
+
+Works like:
+  ((\"shortcut\" \"Description\" \"state\"))
+
+Note that after running this you probably want to eval
+  (magit-review/add-filter-bookmark-keys)")
+
+(defvar magit-review/state-bookmarks
+  '(("tr" "tracked:review" "tracked:review")
+    ("td" "tracked:deferred" "tracked:deferred")
+    ("ii" "ignored:ignored" "ignored:ignored")
+    ("in" "ignored:nothing-new" "ignored:nothing-new")
+    ("c" "clear state" nil))
+  "Modify this to change the keyboard keys which set which state.
+
+Works like:
+  ((\"shortcut\" \"Description\" \"state\"))
+
+Note that after running this you probably want to eval
+  (magit-review/add-state-bookmark-keys)")
+#+end_src
+
+Fairly simple in both cases.  So say you wanted to add some state
+bookmarks so you can set these really easily.
+
+#+begin_src emacs-lisp
+(setq magit-review/state-bookmarks
+      (append
+       magit-review/state-bookmarks
+       '(("wd" "Work: do it now" "workified:do-it-now")
+         ("wr" "Work: review it" "workified:review-it")
+         ("ww" "Work: waiting on review" "workified:waiting-review"))))
+; You must run this in order for the bookmark keys to get regenerated
+(magit-review/add-state-bookmark-keys)
+
+(setq magit-review/filter-bookmarks
+      (append
+       magit-review/filter-bookmarks
+       '(("wd" "Work: do/review it queue" "workified:do-it-now=all workified:review-it:new")
+         ("wa" "Work: all" "workified=all"))))
+; You must run this in order for the bookmark keys to get regenerated
+(magit-review/add-filter-bookmark-keys)
+#+end_src
+
+As you can probably tell in both types of bookmarks, the syntax is roughly:
+
+: '(("key" "description" "state/filter"))
+
+Now you have your own workflow!
 
 ** Where things get stored
 
 Easy!  magit-review stores things in a big ol json dump in
 .git/info/magit-review.
-
 
 * Things to do
 ** TODO Sorting the state categories in the display
