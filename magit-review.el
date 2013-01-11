@@ -237,10 +237,10 @@ it as \"untracked\" before passing it in here.
 This function weeds out the ones that shouldn't be shown.
 
 The returned a plist which will look something like:
-  ((\"untracked\" . (\"refs/remotes/bretts/keyboard_nav\"
-                     \"refs/remotes/bretts/master\")
-   (\"tracked:review\" . (\"refs/remotes/bretts/newlayout\"
-                          \"refs/remotes/bretts/newlayout-stage\"))))
+  ((\"untracked\" (\"refs/remotes/bretts/keyboard_nav\"
+                   \"refs/remotes/bretts/master\")
+   (\"tracked:review\" (\"refs/remotes/bretts/newlayout\"
+                        \"refs/remotes/bretts/newlayout-stage\"))))
 "
   (let ((refs-to-check
          (or refs-to-check
