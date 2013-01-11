@@ -47,6 +47,12 @@ This is only non-nil in review buffers.")
 (make-variable-buffer-local 'magit-review-head)
 
 
+;; (defface magit-review-section-state-changed
+;;   '((t :inherit magit-header :background "saddle brown"))
+;;   "Face for when a section's state has changed."
+;;   :group 'magit-faces)
+
+
 ;;; Format of review metadata
 ;;; -------------------------
 ;; 
@@ -337,6 +343,20 @@ The returned a plist which will look something like:
              (magit-section-title (magit-section-parent section)))))))
 
 
+(defun magit-review/move-point-to-top-of-branch ()
+  (interactive)
+  (beginning-of-line)
+  (let ((section (plist-get (text-properties-at (point)) 'magit-section)))
+    (if (eq (magit-section-type section) 'commit)
+        (magit-goto-parent-section))))
+
+(defun magit-review/visually-mark-state-change ()
+  "Visually mark the state change on the branch at point"
+  (save-excursion
+    (magit-review/move-point-to-top-of-branch)
+    (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
+      (overlay-put overlay 'face 'mode-line-inactive))))
+
 (defun magit-review/get-current-branch-state (branch-ref)
   "Get the current state of this branch.
 
@@ -371,6 +391,7 @@ If branch has no state, returns nil."
       (progn
         (remhash "state" branch-record)
         (puthash branch-ref branch-record magit-review/review-state))))
+    (magit-review/visually-mark-state-change)
     (magit-review/serialize-review-state)))
 
 (defun magit-review/apply-state-to-branch (state)
