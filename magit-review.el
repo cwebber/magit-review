@@ -3,7 +3,7 @@
 ;; Magit-review
 ;; ------------
 ;;
-;; Copyright (C) 2012, Christopher Allan Webber
+;; Copyright (C) 2012, 2013 Christopher Allan Webber
 ;;
 ;; magit-review is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
