@@ -483,6 +483,7 @@ Note that after running this you probably want to eval
     map))
 
 (magit-review/add-filter-bookmark-keys)
+(magit-review/add-state-bookmark-keys)
 
 
 ;; Mode stuff
