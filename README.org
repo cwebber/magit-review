@@ -51,7 +51,7 @@ use of that strategy, read on.
 magit-review is licensed under the GNU GPL v3 or later, just like
 GNU Emacs.
 
-This document is waived into the public domain under the CC0 tool.
+This document is waived into the public domain under CC0 1.0.
 
 * Using magit-review
 ** Installing
